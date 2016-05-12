@@ -1,5 +1,24 @@
+#!/usr/bin/env python
+
+"""Diary Pete is a bot that helps become more conscious of your every day life.
+
+Diary Pete was built for the telegram platform and is available for usage
+via http://telegram.me/diarypete_bot.
+
+Please see https://github.com/ciex/diary-pete for additional information about
+the bot.
+"""
+
 import os
+
 from telegram.ext import Updater, CommandHandler
+
+__author__ = "Vincent Ahrend"
+__copyright__ = "Copyright 2015, Vincent Ahrend"
+__version__ = "1.0.0"
+__maintainer__ = "Vincent Ahrend"
+__email__ = "mail@vincentahrend.com"
+__status__ = "Development"
 
 
 def start(bot, update):
