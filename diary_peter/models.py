@@ -6,6 +6,7 @@ import datetime
 import peewee as pw
 
 from uuid import uuid4
+# from playhouse.pool import PooledSqliteDatabase
 
 
 db = pw.SqliteDatabase('test.db')
@@ -25,6 +26,11 @@ class User(pw.Model):
     ask_good_things = pw.BooleanField(default=True)
     ask_diary = pw.BooleanField(default=True)
 
+    chat_id = pw.CharField(unique=True)
+    state_module = pw.CharField(default="setup")
+    state = pw.IntegerField(default=0)
+
+    wake_time = pw.TimeField(default=lambda: datetime.time(hour=9))
     diary_time = pw.TimeField(default=lambda: datetime.time(hour=22))
 
     class Meta:
