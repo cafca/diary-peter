@@ -41,7 +41,7 @@ class User(pw.Model):
     @classmethod
     def get_or_create(cls, user):
         """Return the user record for username or return a new record."""
-        record = cls.query.get(username=user.username)
+        record = cls.select().where(cls.username == user.username).get()
         if record is None:
             record = User(
                 id=uuid4().hex,
