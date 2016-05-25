@@ -32,6 +32,19 @@ class User(pw.Model):
 
         database = db
 
+    @classmethod
+    def get_or_create(cls, user):
+        """Return the user record for username or return a new record."""
+        record = cls.query.get(username=user.username)
+        if record is None:
+            record = User(
+                id=uuid4().hex,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                username=user.username,
+            )
+        return record
+
 
 class Record(pw.Model):
     """Model a single record in a user's diary."""
