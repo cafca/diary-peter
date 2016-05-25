@@ -1,0 +1,75 @@
+Hello Vincent
+
+I am Diary Peter, and I can help you become more conscious of your day-to-day.
+
+Every evening, I will ask you about your day. After some time you can look back and remember all the nice things.
+
+Just a quick question to get an idea of your daily rhythm: When do you usually get up? You can always change this later by typing **/setup**
+
+> 9
+
+Ok, 9am. I have a number of coaching ideas that can assist you with more specific goals like becoming conscious of your nutrition, sleep&dreams or reading habits. Are you interested in the selection?
+
+> [Yes] [Maybe later]
+
+**nutrition**: I will ask you in the morning, after noon and evening what you ate. Answer with a short description or snap a picture.
+
+**weight**: If you’d like I can also record your weight every morning.
+
+**grateful**: Every evening I will ask you for three things that you were grateful for today. A study by [name] has shown that being mindful of the good things in this way increases happiness for a long time!
+
+**sleep**: Would you like to sleep more regularly? I can give you a heads-up in time and then remind you to hit the sheets. In the morning I will ask you for how long you actually slept so you can see how your rest time improves after a while.
+
+**dream**: Additionally, I can ask you to tell me your dreams and keep these memories for you. Recording dreams this way will make you remember them more often and more clearly.
+
+**reading**: Do you like to read? Or would you? Write down what you read, what was interesting and gather a collection of insights and inspirations.
+
+Just type the name of a program to add it now. Or do you want to skip this?
+
+> nutrition
+
+Ok, I will ask you at 10am about your breakfast, at 2.30pm about your lunch and at 8.30pm about your dinner. Just type **/food** if you want to add something in between or look at your past answers.
+
+This program is great to combine with the **weight**  program.
+
+Type another program's name or **continue** if you are done.
+
+> weight
+
+Ok,  I will ask you at 9.30am every day about your weight. You will get the most reliable measurements by taking your weight always at the same point in your day, e.g. after you get up and go pee, but before breakfast. Just type **/weight** to see a graph of your past answers.
+
+Do you have a goal weight you would like to reach?
+
+> 75kg
+
+Got it. If you are disciplined you can loose 0.5kg every week. Remember that weight is lost by always eating things that make you full, but also have little calories.
+
+> grateful
+
+Good choice! I will ask you every day at 11pm to tell me three things you were grateful for in that day. Just type **/grateful** to see your past answers.
+
+> sleep
+
+As you usuallu get up at 9am, I would remind you about heading to bed soon at 12am. Then, at 9am, I will ask you for how long you actually slept. Does that fit you?
+
+> dream
+
+Ok, when you wake up in the morning type **/dream** to enter any dreams you remember. I will remind you at 9.15am. In the beginning you will only remember them some times, but as you type them down it will become easier to access these memories.
+
+> reading
+
+What book are you reading right now?
+
+> Dracula
+
+Cool! Do you want reminders to add to your reading diary?
+
+> [*Daily] [Weekly] [No reminders]
+
+Ok, I will ask you every evening at 8.30pm what you read today.
+
+You can always type **/reading** to add an entry to your reading diary or see your past entries.
+
+> continue
+
+Finished! Thanks for taking the time.
