@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-"""Diary Pete is a bot that helps become more conscious of your every day life.
+"""Diary Peter is a bot that helps become more conscious of your every day life.
 
-Diary Pete was built for the telegram platform and is available for usage
+Diary Peter was built for the telegram platform and is available for usage
 via http://telegram.me/diarypete_bot.
 
-Please see https://github.com/ciex/diary-pete for additional information about
+Please see https://github.com/ciex/diary-peter for additional information about
 the bot.
 """
 
