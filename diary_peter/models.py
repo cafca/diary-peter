@@ -21,16 +21,32 @@ class User(pw.Model):
     username = pw.CharField()
     active = pw.BooleanField(default=True)
 
+    # Did the user complete the intro script
     intro_seen = pw.BooleanField(default=False)
+
+    # Does the user want to be asked for their mood?
     ask_mood = pw.BooleanField(default=True)
+
+    # Does the user want to be asked to record good things?
     ask_good_things = pw.BooleanField(default=True)
+
+    # Does the user want to be asked to complete a regular diary?
     ask_diary = pw.BooleanField(default=True)
 
+    # --- State machine data
+    # Current chat id with which the user is participating
     chat_id = pw.CharField(unique=True)
+
+    # Which module is currently active in the user's chat session?
     state_module = pw.CharField(default="setup")
+
+    # In which state is this module?
     state = pw.IntegerField(default=0)
 
+    # What is the time at which the user usually wakes up?
     wake_time = pw.TimeField(default=lambda: datetime.time(hour=9))
+
+    # What is the time at which the user wants to be asked for their daily diary?
     diary_time = pw.TimeField(default=lambda: datetime.time(hour=22))
 
     class Meta:
@@ -41,8 +57,9 @@ class User(pw.Model):
     @classmethod
     def get_or_create(cls, user):
         """Return the user record for username or return a new record."""
-        record = cls.select().where(cls.username == user.username).get()
-        if record is None:
+        try:
+            record = cls.select().where(cls.username == user.username).get()
+        except:
             record = User(
                 id=uuid4().hex,
                 first_name=user.first_name,
@@ -50,6 +67,17 @@ class User(pw.Model):
                 username=user.username,
             )
         return record
+
+    def create_record(self, kind, reaction, content):
+        """Return a new record in this user's diary."""
+        with db.transaction():
+            rv = Record(
+                kind=kind,
+                user=self,
+                reaction=reaction,
+                content=content
+            )
+        return rv
 
 
 class Record(pw.Model):

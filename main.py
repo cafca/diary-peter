@@ -34,8 +34,9 @@ logger = logging.getLogger(__name__)
 
 def setup(bot, update, db):
     """Setup a user account by asking some basic questions."""
-    user = User.get_or_create(user=update.message.from_user)
-    user.state_module = "setup"
+    with db.transaction():
+        user = User.get_or_create(user=update.message.from_user)
+        user.state_module = "setup"
 
     START, AWAITING_WAKE_TIME, AWAITING_SELECTION_CONFIRMATION = range(3)
 
