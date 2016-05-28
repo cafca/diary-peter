@@ -66,9 +66,7 @@ def create_users(num=10):
     for i in range(num):
         rv.append(User.create(
             telegram_id=100 + i,
-            username="User-{}".format(i),
-            first_name="Max",
-            last_name="Schmatz",
+            name="User-{}".format(i),
             chat_id="Chat-{}".format(i)
         ))
     return rv

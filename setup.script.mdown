@@ -12,19 +12,19 @@ Ok, 9am. I have a number of coaching ideas that can assist you with more specifi
 
 > [Yes] [Maybe later]
 
-**nutrition**: I will ask you in the morning, after noon and evening what you ate. Answer with a short description or snap a picture.
+*nutrition*: I will ask you in the morning, after noon and evening what you ate. Answer with a short description or snap a picture.
 
-**weight**: If you’d like I can also record your weight every morning.
+*weight*: If you’d like I can also record your weight every morning.
 
-**grateful**: Every evening I will ask you for three things that you were grateful for today. A study by [name] has shown that being mindful of the good things in this way increases happiness for a long time!
+*grateful*: Every evening I will ask you for three things that you were grateful for today. A study by [name] has shown that being mindful of the good things in this way increases happiness for a long time!
 
-**sleep**: Would you like to sleep more regularly? I can give you a heads-up in time and then remind you to hit the sheets. In the morning I will ask you for how long you actually slept so you can see how your rest time improves after a while.
+*sleep*: Would you like to sleep more regularly? I can give you a heads-up in time and then remind you to hit the sheets. In the morning I will ask you for how long you actually slept so you can see how your rest time improves after a while.
 
-**dream**: Additionally, I can ask you to tell me your dreams and keep these memories for you. Recording dreams this way will make you remember them more often and more clearly.
+*dream*: Additionally, I can ask you to tell me your dreams and keep these memories for you. Recording dreams this way will make you remember them more often and more clearly.
 
-**reading**: Do you like to read? Or would you? Write down what you read, what was interesting and gather a collection of insights and inspirations.
+*reading*: Do you like to read? Or would you? Write down what you read, what was interesting and gather a collection of insights and inspirations.
 
-Just type the name of a program to add it now. Or do you want to skip this?
+Just type the name of a program to add it now. You can see these later again by typing */coaches*
 
 > nutrition
 

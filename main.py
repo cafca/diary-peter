@@ -12,8 +12,9 @@ the bot.
 import logging
 import os
 
-from telegram.ext import Updater, CommandHandler
-from diary_peter.dispatchers import start, hello
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from diary_peter.coaches import Coach
+from diary_peter.models import db
 
 __author__ = "Vincent Ahrend"
 __copyright__ = "Copyright 2016, Vincent Ahrend"
@@ -29,6 +30,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def update_handler(bot, update):
+    """Handle updates by routing them to the appropriate coach."""
+    coach_cls = Coach.select(db, update.message.from_user)
+    coach = coach_cls(bot, db, update.message.from_user)
+    coach.handle(update)
+
+
 def main():
     """Main loop."""
     token = os.environ.get("TG_TOKEN", False)
@@ -39,8 +47,8 @@ def main():
     updater = Updater(token)
     dp = updater.dispatcher
 
-    dp.addHandler(CommandHandler('start', start))
-    dp.addHandler(CommandHandler('hello', hello))
+    dp.add_handler(CommandHandler('start', update_handler))
+    dp.add_handler(MessageHandler([Filters.text], update_handler))
 
     updater.start_polling()
     updater.idle()

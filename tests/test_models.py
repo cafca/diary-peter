@@ -20,8 +20,9 @@ class TestUser():
             for u in users:
                 u.save()
 
-            user = User.get(User.username == users[0].username)
+            user = User.get(User.id == users[0].id)
             assert isinstance(user, User)
+            assert user == users[0]
 
     def test_get_or_create(self, test_db, tguser):
         """Test get_or_create shortcut."""

@@ -5,7 +5,6 @@
 import datetime
 import peewee as pw
 
-from uuid import uuid4
 # from playhouse.pool import PooledSqliteDatabase
 
 
@@ -16,9 +15,7 @@ class User(pw.Model):
     """Model a Telegram user."""
 
     telegram_id = pw.IntegerField(unique=True)
-    first_name = pw.CharField()
-    last_name = pw.CharField()
-    username = pw.CharField()
+    name = pw.CharField(null=True)
     active = pw.BooleanField(default=True)
 
     # Did the user complete the intro script
@@ -37,8 +34,8 @@ class User(pw.Model):
     # Current chat id with which the user is participating
     chat_id = pw.CharField(unique=True)
 
-    # Which module is currently active in the user's chat session?
-    state_module = pw.CharField(default="setup")
+    # Which coach is currently active in the user's chat session?
+    active_coach = pw.CharField(default="Setup")
 
     # In which state is this module?
     state = pw.IntegerField(default=0)
@@ -59,13 +56,10 @@ class User(pw.Model):
         """Get or create based on a Telegram user object."""
         return User.get_or_create(
             telegram_id=tguser.id,
-            first_name=tguser.first_name,
-            last_name=tguser.last_name,
-            username=tguser.username,
             chat_id=tguser.id
         )
 
-    def create_record(self, kind, reaction, content):
+    def create_record(self, kind, content, reaction=None):
         """Return a new record in this user's diary."""
         with db.transaction():
             rv = Record(
@@ -83,7 +77,7 @@ class Record(pw.Model):
     kind = pw.CharField()
     user = pw.ForeignKeyField(User, related_name="records")
     created = pw.DateTimeField(default=datetime.datetime.now)
-    reaction = pw.CharField()
+    reaction = pw.CharField(null=True)
     content = pw.CharField()
 
     class Meta:
