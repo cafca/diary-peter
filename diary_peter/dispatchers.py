@@ -8,8 +8,6 @@ from diary_peter.coaches import Config
 def start(bot, update):
     """Initial message for new users."""
     out = []
-    user = User.get_or_create(user=update.message.from_user)
-    db.connect()
 
     messages = [
         "Hello {}".format(update.message.from_user.first_name),
@@ -20,6 +18,9 @@ def start(bot, update):
     for m in messages:
         out.append(bot.sendMessage(update.message.chat_id, text=m))
 
+    db.connect()
+    user, created = User.get_or_create(telegram_id=update.message.from_user.id)
+
     if user.intro_seen is False:
         out.append(Config.new_user(bot, update, db))
 
@@ -29,4 +30,4 @@ def start(bot, update):
 
 def hello(bot, update):
     bot.sendMessage(update.message.chat_id,
-                    text='Hello {0}: {}'.format(update.message.from_user.first_name, update.message.chat_id))
+                    text='Hello {}: {}'.format(update.message.from_user.first_name, update.message.chat_id))

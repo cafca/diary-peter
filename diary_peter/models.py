@@ -15,7 +15,7 @@ db = pw.SqliteDatabase('test.db')
 class User(pw.Model):
     """Model a Telegram user."""
 
-    id = pw.CharField(primary_key=True, unique=True)
+    telegram_id = pw.IntegerField(unique=True)
     first_name = pw.CharField()
     last_name = pw.CharField()
     username = pw.CharField()
@@ -54,19 +54,16 @@ class User(pw.Model):
 
         database = db
 
-    @classmethod
-    def get_or_create(cls, user):
-        """Return the user record for username or return a new record."""
-        try:
-            record = cls.select().where(cls.username == user.username).get()
-        except:
-            record = User(
-                id=uuid4().hex,
-                first_name=user.first_name,
-                last_name=user.last_name,
-                username=user.username,
-            )
-        return record
+    @staticmethod
+    def tg_get_or_create(tguser):
+        """Get or create based on a Telegram user object."""
+        return User.get_or_create(
+            telegram_id=tguser.id,
+            first_name=tguser.first_name,
+            last_name=tguser.last_name,
+            username=tguser.username,
+            chat_id=tguser.id
+        )
 
     def create_record(self, kind, reaction, content):
         """Return a new record in this user's diary."""
@@ -83,7 +80,6 @@ class User(pw.Model):
 class Record(pw.Model):
     """Model a single record in a user's diary."""
 
-    id = pw.UUIDField(default=uuid4, primary_key=True, unique=True)
     kind = pw.CharField()
     user = pw.ForeignKeyField(User, related_name="records")
     created = pw.DateTimeField(default=datetime.datetime.now)
@@ -99,7 +95,6 @@ class Record(pw.Model):
 class Goal(pw.Model):
     """Model goals set by a user."""
 
-    id = pw.UUIDField(default=uuid4, primary_key=True, unique=True)
     user = pw.ForeignKeyField(User, related_name="goals")
     name = pw.CharField()
     reminder_interval = pw.IntegerField(default=(24 * 60 * 60))

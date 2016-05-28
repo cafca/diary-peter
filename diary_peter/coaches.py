@@ -2,13 +2,20 @@
 """Coaches lead users through each of their own diary programs."""
 
 import datetime
+import logging
+import telegram
 
-from diary_peter import keyboards
+from diary_peter.keyboards import keyboard
 from diary_peter.models import User
 
 
 class Config:
     """Configuration conversations."""
+
+    NAME = "Config"
+
+    # Possible states for this coach
+    START, AWAITING_WAKE_TIME, AWAITING_SELECTION_CONFIRMATION = range(3)
 
     @staticmethod
     def new_user(bot, update, db):
@@ -16,30 +23,39 @@ class Config:
         out = []
 
         with db.transaction():
-            user = User.get_or_create(user=update.message.from_user)
-            user.state_module = "setup"
+            user, created = User.tg_get_or_create(update.message.from_user)
+            user.state_module = Config.NAME
+            user.save()
 
-        START, AWAITING_WAKE_TIME, AWAITING_SELECTION_CONFIRMATION = range(3)
-
-        if user.state == START:
+        if user.state == Config.START:
             out.append(bot.sendMessage(update.message.chat_id,
                 text="Just a quick question to get an idea of your daily rhythm: *When do you usually get up?* \n\nYou can always change this later by typing */setup*",
-                reply_markup=keyboards.morning_hours))
+                reply_markup=keyboard('morning_hours'),
+                parse_mode=telegram.ParseMode.MARKDOWN))
 
             with db.transaction():
-                user.state = AWAITING_WAKE_TIME
+                user.state = Config.AWAITING_WAKE_TIME
+                user.save()
 
-        elif user.state == AWAITING_WAKE_TIME:
+        elif user.state == Config.AWAITING_WAKE_TIME:
             wake_time_resp = update.message.text
-            wake_time = datetime.time(hour=int(wake_time_resp[:-3]))
-            if wake_time_resp[-2:] == "pm":
-                wake_time = wake_time + datetime.timedelta(hours=12)
+            try:
+                wake_time = datetime.time(hour=int(wake_time_resp[:-2]))
+            except ValueError:
+                msg = "Please enter a wake time such as '9am'."
+                out.append(bot.sendMessage(update.message.chat_id,
+                text=msg, reply_markup=keyboard('morning_hours')))
+            else:
+                if wake_time_resp[-2:] == "pm":
+                    wake_time = wake_time + datetime.timedelta(hours=12)
 
-            msg = "Ok, {}. I have a number of coaching ideas that can assist you with more specific goals like becoming conscious of your nutrition, sleep&dreams or reading habits. Are you interested in the selection?".format(wake_time_resp)
-            out.append(bot.sendMessage(update.message.chat_id, text=msg, reply_markup=keyboards.thumbs))
+                msg = "Ok, {}. I have a number of coaching ideas that can assist you with more specific goals like becoming conscious of your nutrition, sleep&dreams or reading habits. Are you interested in the selection?".format(wake_time_resp)
+                out.append(bot.sendMessage(update.message.chat_id,
+                    text=msg, reply_markup=keyboard('thumbs')))
 
-            with db.transaction():
-                user.wake_time = wake_time
-                user.state = AWAITING_SELECTION_CONFIRMATION
+                with db.transaction():
+                    user.wake_time = wake_time
+                    user.state = Config.AWAITING_SELECTION_CONFIRMATION
+                    user.save()
 
         return out

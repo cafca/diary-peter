@@ -16,17 +16,23 @@ class TestUser():
     def test_gen(self, test_db):
         """Test creating users and retrieving them from the db."""
         with test_database(test_db, [User, Goal, Record]):
-            create_users()
+            users = create_users()
+            for u in users:
+                u.save()
 
-            user = User.get(User.username == "User-1")
-        assert isinstance(user, User)
+            user = User.get(User.username == users[0].username)
+            assert isinstance(user, User)
 
     def test_get_or_create(self, test_db, tguser):
         """Test get_or_create shortcut."""
         with test_database(test_db, [User, Goal, Record]):
-            user = User.get_or_create(tguser)
+            user, created = User.tg_get_or_create(tguser)
+            user.save()
 
-        assert isinstance(user, User)
+            assert isinstance(user, User)
+
+            user1 = User.get(User.id == user.id)
+            assert user1 == user
 
 
 class TestRecords():
@@ -42,6 +48,7 @@ class TestRecords():
                     user.create_record("diary", Emoji.HOT_BEVERAGE,
                     "Wow, I had {} coffee today.".format(i))
                 )
-        assert len(records) == 10
-        assert isinstance(records[0], Record)
-        assert records[0].user == user
+
+            assert len(records) == 10
+            assert isinstance(records[0], Record)
+            assert records[0].user == user
