@@ -12,8 +12,9 @@ the bot.
 import logging
 import os
 
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from diary_peter.coaches import Coach
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, \
+    CallbackQueryHandler
+from diary_peter import coaches
 from diary_peter.models import db
 
 __author__ = "Vincent Ahrend"
@@ -25,15 +26,21 @@ __status__ = "Development"
 
 
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO)
+    format='%(levelname)s\t%(name)s\t\t%(message)s',
+    level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
 def update_handler(bot, update):
     """Handle updates by routing them to the appropriate coach."""
-    coach_cls = Coach.select(db, update.message.from_user)
-    coach = coach_cls(bot, db, update.message.from_user)
+    try:
+        user = update.message.from_user
+    except AttributeError:
+        user = update.callback_query.from_user
+
+    coach_name = coaches.select(db, user)
+    coach_cls = getattr(coaches, coach_name)
+    coach = coach_cls(bot, db, user)
     coach.handle(update)
 
 
@@ -49,6 +56,7 @@ def main():
 
     dp.add_handler(CommandHandler('start', update_handler))
     dp.add_handler(MessageHandler([Filters.text], update_handler))
+    dp.add_handler(CallbackQueryHandler(update_handler))
 
     updater.start_polling()
     updater.idle()

@@ -4,12 +4,21 @@
 import datetime
 import logging
 import telegram
+import peewee as pw
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.emoji import Emoji
 
-from diary_peter.keyboards import keyboard
-from diary_peter.models import User
+from diary_peter.keyboards import keyboard, inline_keyboard
+from diary_peter.models import User, CoachSetup
+
+
+def select(db, tguser):
+    """Return active coach for a telegram user."""
+    with db.transaction():
+        user, created = User.tg_get_or_create(tguser)
+        if created:
+            logging.info("Created new user {} in database".format(user))
+        return user.active_coach
 
 
 class Coach(object):
@@ -27,15 +36,6 @@ class Coach(object):
             user, created = User.tg_get_or_create(tguser)
             self.user = user
 
-    @staticmethod
-    def select(db, tguser):
-        """Return active coach for a telegram user."""
-        with db.transaction():
-            user, created = User.tg_get_or_create(tguser)
-            if created:
-                logging.info("Created new user {} in database".format(user))
-            return user.active_coach
-
 
 class Menu(Coach):
     """Main menu conversation."""
@@ -44,18 +44,6 @@ class Menu(Coach):
 
     # Possible states for this coach
     START, AWAITING_DIARY_ENTRY = range(2)
-
-    def menu_keyboard(self):
-        """Return an inline keyboard listing options for user's main menu."""
-        options = {
-            "coaches": "Change your coaches",
-            "setup": "Edit settings",
-            "discover": "Discover more"
-        }
-        rv = InlineKeyboardMarkup(
-            [[InlineKeyboardButton(v, callback_data=k)]
-            for k, v in options.items()])
-        return rv
 
     def handle(self, update):
         """Main menu shows primary interaction affordances."""
@@ -71,8 +59,13 @@ class Menu(Coach):
 
         elif self.user.state == self.START:
             msg = "Just hit me up if you need anything or send me a message to add it to your diary."
+            options = {
+                "coaches": "Change your coaches",
+                "setup": "Edit settings",
+                "discover": "Discover more"
+            }
             out.append(self.bot.sendMessage(update.message.chat_id,
-                text=msg, reply_markup=self.menu_keyboard()))
+                text=msg, reply_markup=inline_keyboard(options)))
 
             with self.db.transaction():
                 self.user.state = self.AWAITING_DIARY_ENTRY
@@ -87,6 +80,11 @@ class Setup(Coach):
     # Possible states for this coach
     START, AWAITING_NAME, AWAITING_WAKE_TIME, AWAITING_SELECTION_CONFIRMATION, \
         AWAITING_COACH_SELECTION = range(5)
+
+    AVAILABLE_COACHES = {
+        'gratitude': 'Gratitude',
+        'weight': 'Weight'
+    }
 
     def handle(self, update):
         """Setup a user account by asking some basic questions."""
@@ -147,17 +145,26 @@ class Setup(Coach):
 
         elif self.user.state == self.AWAITING_SELECTION_CONFIRMATION:
             if update.message.text == Emoji.THUMBS_UP_SIGN:
-                msgs = ["*nutrition*: I will ask you in the morning, afternoon and evening what you ate. Answer with a short description or snap a picture.",
+                msgs = [
+                    # "*nutrition*: I will ask you in the morning, afternoon and evening what you ate. Answer with a short description or snap a picture.",
                     "*weight*: If you’d like I can also record your weight every morning.",
-                    "*grateful*: Every evening I will ask you for three things that you were grateful for today. A study by [name] has shown that being mindful of the small good things in this way increases happiness for a long time!",
-                    "*sleep*: Would you like to sleep more regularly? I can give you a heads-up in time and then remind you to hit the sheets. In the morning I will ask you for how long you actually slept so you can see how your rest time improves after a while.",
-                    "*dream*: Additionally, I can ask you to tell me your dreams and keep these memories for you. Recording dreams this way will make you remember them more often and more clearly.",
-                    "*reading*: Do you like to read? Or would you? Write down what you read, what was interesting and gather a collection of insights and inspirations.",
-                    "Just type the name of a program to add it now. You can see these later again by typing */coaches*"]
+                    "*gratitude*: Every evening I will ask you for three things that you were grateful for today. A study has shown that being mindful of the small good things in this way increases happiness for a long time!",
+                    # "*sleep*: Would you like to sleep more regularly? I can give you a heads-up in time and then remind you to hit the sheets. In the morning I will ask you for how long you actually slept so you can see how your rest time improves after a while.",
+                    # "*dream*: Additionally, I can ask you to tell me your dreams and keep these memories for you. Recording dreams this way will make you remember them more often and more clearly.",
+                    # "*reading*: Do you like to read? Or would you? Write down what you read, what was interesting and gather a collection of insights and inspirations."
+                ]
+
                 out.append([self.bot.sendMessage(update.message.chat_id,
                     text=m,
                     parse_mode=telegram.ParseMode.MARKDOWN,
                     reply_markup=telegram.ReplyKeyboardHide()) for m in msgs])
+
+                kb = self.AVAILABLE_COACHES
+                kb['done'] = "Done adding coaches!"
+
+                out.append(self.bot.sendMessage(update.message.chat_id,
+                    text="Click a coach to add it now.",
+                    reply_markup=inline_keyboard(kb)))
 
                 with self.db.transaction():
                     self.user.state = self.AWAITING_COACH_SELECTION
@@ -174,5 +181,24 @@ class Setup(Coach):
 
                 menu = Menu(self.bot, self.db, self.tguser)
                 out.append(menu.handle(update))
+
+        elif self.user.state == self.AWAITING_COACH_SELECTION:
+
+            query = update.callback_query
+            coach_name = query.data
+
+            self.bot.answerCallbackQuery(query.id, text="Loading {} coach".format(coach_name))
+
+            with self.db.transaction():
+                try:
+                    new_coach = CoachSetup(coach=coach_name, user=self.user)
+                    new_coach.save()
+                except pw.IntegrityError:
+                    msg = "You already have the {} coach".format(coach_name)
+                else:
+                    msg = "Added the {} coach".format(coach_name)
+
+            out.append(self.bot.sendMessage(query.message.chat_id,
+                text=msg))
 
         return out

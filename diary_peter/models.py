@@ -86,16 +86,18 @@ class Record(pw.Model):
         database = db
 
 
-class Goal(pw.Model):
-    """Model goals set by a user."""
+class CoachSetup(pw.Model):
+    """Coach setup for a user."""
 
     user = pw.ForeignKeyField(User, related_name="goals")
-    name = pw.CharField()
-    reminder_interval = pw.IntegerField(default=(24 * 60 * 60))
-    reminder_start = pw.DateTimeField()
-    record_count = pw.IntegerField(default=0)
+    coach = pw.CharField()
 
     class Meta:
         """Metadata for goal model."""
 
         database = db
+
+        # Create a unique index on `user` and `coach` fields
+        indexes = (
+            (('user', 'coach'), True),
+        )

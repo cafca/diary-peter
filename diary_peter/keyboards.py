@@ -4,7 +4,8 @@
 
 import logging
 
-from telegram import KeyboardButton, ReplyKeyboardMarkup, Emoji
+from telegram import KeyboardButton, ReplyKeyboardMarkup, Emoji, \
+    InlineKeyboardButton, InlineKeyboardMarkup
 
 
 def keyboard(name):
@@ -17,7 +18,15 @@ def keyboard(name):
 
     keyboard = [[KeyboardButton(button) for button in line]
         for line in buttons]
-    return ReplyKeyboardMarkup(keyboard)
+    rv = ReplyKeyboardMarkup(keyboard)
+    return rv
+
+
+def inline_keyboard(options):
+    """Return an inline Keyboard given a dictionary of callback:display pairs."""
+    rv = InlineKeyboardMarkup([[InlineKeyboardButton(v, callback_data=k)]
+        for k, v in options.items()])
+    return rv
 
 
 """Keyboard containing the hours from 5am-1pm."""
