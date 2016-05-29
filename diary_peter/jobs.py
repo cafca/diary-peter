@@ -17,7 +17,7 @@ def restore_jobs(job_queue):
 
         scheduled = datetime.combine(datetime.today(), job.scheduled_at)
         if scheduled < datetime.now():
-            scheduled = scheduled + timedelta(day=1)
+            scheduled = scheduled + timedelta(days=1)
         scheduled_remaining = scheduled - datetime.now()
 
         job_queue.put(jobfunc, interval,

@@ -272,7 +272,7 @@ class Gratitude(Coach):
         scheduled_dt = datetime.combine(
             datetime.today(), setup_coach.user.wake_time) - timedelta(hours=10)
         if scheduled_dt < datetime.now():
-            scheduled_dt = scheduled_dt + timedelta(day=1)
+            scheduled_dt = scheduled_dt + timedelta(days=1)
         scheduled_remaining = scheduled_dt - datetime.now()
         # scheduled_remaining = timedelta(seconds=5)
 
