@@ -273,7 +273,7 @@ class Gratitude(Coach):
             datetime.today(), setup_coach.user.wake_time) - timedelta(hours=10)
         if scheduled_dt < datetime.now():
             scheduled_dt = scheduled_dt + timedelta(days=1)
-        scheduled_remaining = scheduled_dt - datetime.now()
+        scheduled_remaining = scheduled_dt - datetime.now() - timedelta(hours=6)
         # scheduled_remaining = timedelta(seconds=5)
 
         job, created = Job.get_or_create(
@@ -293,7 +293,7 @@ class Gratitude(Coach):
         setup_coach.job_queue.put(jobfunc, interval,
             next_t=scheduled_remaining.seconds)
 
-        logger.info("Saved {} and scheduled first run in {} hours".format(job, (scheduled_remaining.seconds/3600)))
+        logger.info("Saved {} and scheduled first run in {}".format(job, scheduled_remaining))
         setup_coach.bot.sendMessage(setup_coach.user.telegram_id,
             text="Good choice! I will ask you every day at {time} to tell me three things you were grateful for in that day.".format(
                 time=scheduled_dt.strftime("%-I %p")))
