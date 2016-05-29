@@ -220,7 +220,7 @@ class Setup(Coach):
                 self.bot.answerCallbackQuery(query.id)
                 out.append(self.bot.sendMessage(query.message.chat_id,
                     parse_mode=telegram.ParseMode.MARKDOWN,
-                    text="You can always see the selection of available coaches later by typing */coaches*."))
+                    text="You can redo this setup later by typing */start*."))
 
                 with self.db.transaction():
                     self.user.intro_seen = True
