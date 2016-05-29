@@ -36,7 +36,7 @@ def restore_jobs(job_queue):
 
         job_queue.put(jobfunc, interval,
             next_t=scheduled_remaining.seconds)
-        logger.info(job)
+        logger.info("{} - {} remaining".format(job, scheduled_remaining))
     logger.info("All jobs restored")
 
 
