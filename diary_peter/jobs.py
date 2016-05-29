@@ -30,9 +30,9 @@ def restore_jobs(job_queue):
         interval = 24 * 60 * 60
 
         scheduled = datetime.combine(datetime.today(), job.scheduled_at)
-        if scheduled < datetime.now():
-            scheduled = scheduled + timedelta(days=1)
         scheduled_remaining = scheduled - datetime.now() - timedelta(hours=6)
+        if scheduled_remaining.seconds < 0:
+            scheduled_remaining = scheduled_remaining + timedelta(days=1)
 
         job_queue.put(jobfunc, interval,
             next_t=scheduled_remaining.seconds)

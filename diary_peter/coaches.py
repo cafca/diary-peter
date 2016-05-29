@@ -287,9 +287,9 @@ class Gratitude(Coach):
         """Setup this coach."""
         scheduled_dt = datetime.combine(
             datetime.today(), setup_coach.user.wake_time) - timedelta(hours=10)
-        if scheduled_dt < datetime.now():
-            scheduled_dt = scheduled_dt + timedelta(days=1)
         scheduled_remaining = scheduled_dt - datetime.now() - timedelta(hours=6)
+        if scheduled_remaining.seconds < 0:
+            scheduled_remaining = scheduled_remaining + timedelta(days=1)
         # scheduled_remaining = timedelta(seconds=5)
 
         job, created = Job.get_or_create(
