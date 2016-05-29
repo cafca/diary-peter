@@ -293,7 +293,7 @@ class Gratitude(Coach):
         setup_coach.job_queue.put(jobfunc, interval,
             next_t=scheduled_remaining.seconds)
 
-        logger.info("Saved {} and scheduled first run in {}".format(job, scheduled_remaining))
+        logger.info("Saved {} and scheduled first run in {} hours".format(job, (scheduled_remaining.seconds/3600)))
         setup_coach.bot.sendMessage(setup_coach.user.telegram_id,
             text="Good choice! I will ask you every day at {time} to tell me three things you were grateful for in that day.".format(
                 time=scheduled_dt.strftime("%-I %p")))
