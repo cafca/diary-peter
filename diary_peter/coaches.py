@@ -62,20 +62,21 @@ class Menu(Coach):
                 text="Ok, added."))
 
         elif self.user.state == self.START:
-            msg = "Just hit me up if you need anything."
+            # msg = "Just hit me up if you need anything."
+            msg = "Just send me a message whenever you want to add something to today's diary."
             out.append(self.bot.sendMessage(self.tguser.id,
                 text=msg, reply_markup=telegram.ReplyKeyboardHide()))
 
-            msg2 = "Or send me a message whenever you want to add something to today's diary."
+            # msg2 = "Or send me a message whenever you want to add something to today's diary."
             # options = {
             #     "coaches": "Change your coaches",
             #     "setup": "Edit settings",
             #     "discover": "Discover more"
             # }
-            out.append(self.bot.sendMessage(self.tguser.id,
-                text=msg2
-                # reply_markup=inline_keyboard(options)
-            ))
+            # out.append(self.bot.sendMessage(self.tguser.id,
+            #     text=msg2
+            #     reply_markup=inline_keyboard(options)
+            # ))
 
             self.user.state = self.AWAITING_DIARY_ENTRY
             with self.db.transaction():
@@ -239,6 +240,8 @@ class Setup(Coach):
                         text="Now adding the {} coach.".format(coach_name)))
                     coach_cls = globals()[coach_name]
                     coach_cls.setup(self)
+                    out.append(self.bot.sendMessage(query.message.chat_id,
+                        text="Add another coach or click 'continue' above to finish.."))
                 else:
                     out.append(self.bot.sendMessage(query.message.chat_id,
                         text="You have already added the {} coach".format(coach_name)))
@@ -268,8 +271,8 @@ class Gratitude(Coach):
         """Setup this coach."""
         scheduled_dt = datetime.combine(
             datetime.today(), setup_coach.user.wake_time) + timedelta(hours=14)
-        # scheduled_remaining = scheduled_dt - datetime.now()
-        scheduled_remaining = timedelta(seconds=5)
+        scheduled_remaining = scheduled_dt - datetime.now()
+        # scheduled_remaining = timedelta(seconds=5)
 
         job, created = Job.get_or_create(
             coach=Gratitude.NAME,
