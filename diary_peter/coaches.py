@@ -341,7 +341,7 @@ class Gratitude(Coach):
                     text="Nice! Now, about that first one:\n\n_{}_\n\n".format(
                         self.collector[0].content))
                 self.bot.sendMessage(self.tguser.id,
-                    text="Now tell me, what do you think why this particular good thing happened to you?")
+                    text="Can you tell me, what you think why this particular good thing happened to you?")
 
                 self.user.state = self.AWAITING_REASONS
                 with self.db.transaction():
