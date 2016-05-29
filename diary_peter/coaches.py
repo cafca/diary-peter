@@ -78,6 +78,7 @@ class Menu(Coach):
             #     reply_markup=inline_keyboard(options)
             # ))
 
+            self.user.active_coach = self.NAME
             self.user.state = self.AWAITING_DIARY_ENTRY
             with self.db.transaction():
                 self.user.save()
