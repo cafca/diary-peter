@@ -27,25 +27,32 @@ __status__ = "Development"
 
 logging.basicConfig(
     format='%(levelname)s\t%(name)s\t\t%(message)s',
-    level=logging.DEBUG)
+    level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+job_queue = None
 
 
 def update_handler(bot, update):
     """Handle updates by routing them to the appropriate coach."""
     try:
-        user = update.message.from_user
+        tguser = update.message.from_user
     except AttributeError:
-        user = update.callback_query.from_user
+        tguser = update.callback_query.from_user
 
-    coach_name = coaches.select(db, user)
+    coach_name = coaches.select(db, tguser)
     coach_cls = getattr(coaches, coach_name)
-    coach = coach_cls(bot, db, user)
+    coach = coach_cls(bot, db, tguser, job_queue)
+
+    logger.info("User {} entering {}:{}".format(
+        tguser.id, coach_name, coach.user.state))
     coach.handle(update)
 
 
 def main():
     """Main loop."""
+    global job_queue
+
     token = os.environ.get("TG_TOKEN", False)
     if not token:
         print("TG_TOKEN environment variable not set")
@@ -53,6 +60,8 @@ def main():
 
     updater = Updater(token)
     dp = updater.dispatcher
+
+    job_queue = updater.job_queue
 
     dp.add_handler(CommandHandler('start', update_handler))
     dp.add_handler(MessageHandler([Filters.text], update_handler))

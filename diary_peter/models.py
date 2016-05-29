@@ -43,9 +43,6 @@ class User(pw.Model):
     # What is the time at which the user usually wakes up?
     wake_time = pw.TimeField(default=lambda: datetime.time(hour=9))
 
-    # What is the time at which the user wants to be asked for their daily diary?
-    diary_time = pw.TimeField(default=lambda: datetime.time(hour=22))
-
     class Meta:
         """Metadata for user model."""
 
@@ -80,10 +77,19 @@ class Record(pw.Model):
     reaction = pw.CharField(null=True)
     content = pw.CharField()
 
+    def __repr__(self):
+        """Return readable representation."""
+        return "{} #{} of User-{} ({})".format(
+            self.kind,
+            self.id,
+            self.user.id,
+            self.created.strftime("%B %d, %Y"))
+
     class Meta:
         """Metadata for record model."""
 
         database = db
+        order_by = ('created',)
 
 
 class CoachSetup(pw.Model):
@@ -91,6 +97,7 @@ class CoachSetup(pw.Model):
 
     user = pw.ForeignKeyField(User, related_name="goals")
     coach = pw.CharField()
+    scheduled_at = pw.TimeField(default=lambda: datetime.time(hour=22))
 
     class Meta:
         """Metadata for goal model."""

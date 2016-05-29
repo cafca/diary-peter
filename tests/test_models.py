@@ -5,7 +5,7 @@
 from playhouse.test_utils import test_database
 from telegram.emoji import Emoji
 
-from diary_peter.models import User, Goal, Record
+from diary_peter.models import User, Record
 
 from conftest import create_users
 
@@ -15,7 +15,7 @@ class TestUser():
 
     def test_gen(self, test_db):
         """Test creating users and retrieving them from the db."""
-        with test_database(test_db, [User, Goal, Record]):
+        with test_database(test_db, [User]):
             users = create_users()
             for u in users:
                 u.save()
@@ -26,7 +26,7 @@ class TestUser():
 
     def test_get_or_create(self, test_db, tguser):
         """Test get_or_create shortcut."""
-        with test_database(test_db, [User, Goal, Record]):
+        with test_database(test_db, [User]):
             user, created = User.tg_get_or_create(tguser)
             user.save()
 
@@ -41,7 +41,7 @@ class TestRecords():
 
     def test_gen(self, test_db):
         """Test creating of records."""
-        with test_database(test_db, [User, Goal, Record]):
+        with test_database(test_db, [User, Record]):
             user = create_users(1)[0]
             records = []
             for i in range(10):

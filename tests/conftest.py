@@ -7,6 +7,7 @@ import telegram
 
 from peewee import SqliteDatabase
 from random import randint
+from telegram.ext import Updater
 
 from diary_peter.models import User
 
@@ -32,6 +33,18 @@ def bot():
 
 
 @pytest.fixture
+def updater(request, scope="module"):
+    """Fixture that returns a Telegram Bot updater object."""
+    updater = Updater(os.environ.get("TG_TOKEN", False))
+
+    def stop_updater():
+        updater.stop()
+    request.addfinalizer(stop_updater)
+
+    return updater
+
+
+@pytest.fixture
 def tguser():
     """Fixture that returns a Telegram user object."""
     return telegram.User.de_json(user_data)
@@ -41,6 +54,12 @@ def tguser():
 def update():
     """Return a Telegram update object."""
     return custom_update()
+
+
+@pytest.fixture
+def user():
+    """Return a single user object."""
+    return create_users(num=1)[0]
 
 
 def custom_update(msg="Lol I just ate a whole tuna."):
@@ -60,13 +79,44 @@ def custom_update(msg="Lol I just ate a whole tuna."):
     return rv
 
 
+def inline_query(data):
+    """Return a custom inline query."""
+    iq = {
+        'id': randint(40000, 50000),
+        'from': user_data,
+        'chat': user_data,
+        'offset': 'a',
+        'query': data
+    }
+
+    cq = {
+        'id': randint(40000, 50000),
+        'from': user_data,
+        'message': {
+            'message_id': randint(40000, 50000),
+            'from': user_data,
+            'chat': user_data,
+            'date': 1464350198,
+            'text': 'cq message text'
+        },
+        'data': data
+    }
+
+    rv = telegram.Update.de_json({
+        'update_id': randint(100000000, 200000000),
+        'inline_query': iq,
+        'callback_query': cq
+    })
+    return rv
+
+
 def create_users(num=10):
     """Utility func for creating users."""
     rv = []
     for i in range(num):
-        rv.append(User.create(
-            telegram_id=100 + i,
+        rv.append(User.create_or_get(
+            telegram_id=4325497 + i,
             name="User-{}".format(i),
-            chat_id="Chat-{}".format(i)
-        ))
+            chat_id=4325497 + i
+        )[0])
     return rv
