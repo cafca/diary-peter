@@ -124,7 +124,7 @@ class Setup(Coach):
         elif self.user.state == self.AWAITING_NAME:
             name = update.message.text
             out.append(self.bot.sendMessage(self.tguser.id,
-                text="Sweet, {}! Now just a quick question to get an idea of your daily rhythm: *When do you usually get up?* \n\nYou can always change this later by typing */setup*".format(name),
+                text="Sweet, {}! Now just a quick question to get an idea of your daily rhythm: *When do you usually get up?* \n\nYou can always change this later by typing */start*".format(name),
                 reply_markup=keyboard('morning_hours'),
                 parse_mode=telegram.ParseMode.MARKDOWN))
 
@@ -195,7 +195,7 @@ class Setup(Coach):
             else:
                 out.append(self.bot.sendMessage(self.tguser.id,
                     parse_mode=telegram.ParseMode.MARKDOWN,
-                    text="You can always see the selection of available coaches later by typing */coaches*."))
+                    text="You can always change your selection later by typing */start*."))
 
                 with self.db.transaction():
                     self.user.intro_seen = True
