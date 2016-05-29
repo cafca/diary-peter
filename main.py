@@ -9,13 +9,15 @@ Please see https://github.com/ciex/diary-peter for additional information about
 the bot.
 """
 
-import logging
 import os
+import logging
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, \
     CallbackQueryHandler
+
 from diary_peter import coaches
 from diary_peter.models import db
+from diary_peter.jobs import restore_jobs
 
 __author__ = "Vincent Ahrend"
 __copyright__ = "Copyright 2016, Vincent Ahrend"
@@ -24,13 +26,12 @@ __maintainer__ = "Vincent Ahrend"
 __email__ = "mail@vincentahrend.com"
 __status__ = "Development"
 
+job_queue = None
 
 logging.basicConfig(
     format='%(levelname)s\t%(name)s\t\t%(message)s',
     level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-job_queue = None
 
 
 def update_handler(bot, update):
@@ -62,12 +63,15 @@ def main():
     dp = updater.dispatcher
 
     job_queue = updater.job_queue
+    restore_jobs(job_queue)
 
     dp.add_handler(CommandHandler('start', update_handler))
     dp.add_handler(MessageHandler([Filters.text], update_handler))
     dp.add_handler(CallbackQueryHandler(update_handler))
 
     updater.start_polling()
+    logger.info("Polling started")
+
     updater.idle()
 
 if __name__ == '__main__':

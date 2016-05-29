@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 """Coaches lead users through each of their own diary programs."""
 
-import logging
 import telegram
+import logging
 import peewee as pw
 
 from telegram.emoji import Emoji
 from datetime import datetime, time, timedelta
 
 from diary_peter.keyboards import keyboard, inline_keyboard
-from diary_peter.models import User, CoachSetup, Record
+from diary_peter.models import User, Job, Record
+from diary_peter.jobs import generic_job
+
+logger = logging.getLogger(__name__)
 
 
 def select(db, tguser):
@@ -17,7 +20,7 @@ def select(db, tguser):
     with db.transaction():
         user, created = User.tg_get_or_create(tguser)
         if created:
-            logging.info("Created new user {}".format(user))
+            logger.info("Created new user {}".format(user))
         return user.active_coach
 
 
@@ -64,16 +67,19 @@ class Menu(Coach):
                 text=msg, reply_markup=telegram.ReplyKeyboardHide()))
 
             msg2 = "Or send me a message whenever you want to add something to today's diary."
-            options = {
-                "coaches": "Change your coaches",
-                "setup": "Edit settings",
-                "discover": "Discover more"
-            }
+            # options = {
+            #     "coaches": "Change your coaches",
+            #     "setup": "Edit settings",
+            #     "discover": "Discover more"
+            # }
             out.append(self.bot.sendMessage(self.tguser.id,
-                text=msg2, reply_markup=inline_keyboard(options)))
+                text=msg2
+                # reply_markup=inline_keyboard(options)
+            ))
 
+            self.user.state = self.AWAITING_DIARY_ENTRY
             with self.db.transaction():
-                self.user.state = self.AWAITING_DIARY_ENTRY
+                self.user.save()
         return out
 
 
@@ -207,9 +213,9 @@ class Setup(Coach):
                 return out
 
             coach_name = query.data
-            logging.info("AVAILABLE_COACHES: {}".format(self.AVAILABLE_COACHES))
 
             if coach_name == "continue":
+                self.bot.answerCallbackQuery(query.id)
                 out.append(self.bot.sendMessage(query.message.chat_id,
                     parse_mode=telegram.ParseMode.MARKDOWN,
                     text="You can always see the selection of available coaches later by typing */coaches*."))
@@ -226,18 +232,16 @@ class Setup(Coach):
             elif coach_name in self.AVAILABLE_COACHES:
                 self.bot.answerCallbackQuery(query.id, text="Loading {} coach".format(coach_name))
 
-                with self.db.transaction():
-                    try:
-                        coach_config = CoachSetup(coach=coach_name, user=self.user)
-                        coach_config.save()
-                        out.append(self.bot.sendMessage(query.message.chat_id,
-                            text="Now adding the {} coach.".format(coach_name)))
-                    except pw.IntegrityError:
-                        out.append(self.bot.sendMessage(query.message.chat_id,
-                            text="You have already added the {} coach".format(coach_name)))
-                    else:
-                        coach_cls = globals()[coach_name]
-                        coach_cls.setup(self)
+                try:
+                    Job.get(coach=coach_name, user=self.user)
+                except pw.DoesNotExist:
+                    out.append(self.bot.sendMessage(query.message.chat_id,
+                        text="Now adding the {} coach.".format(coach_name)))
+                    coach_cls = globals()[coach_name]
+                    coach_cls.setup(self)
+                else:
+                    out.append(self.bot.sendMessage(query.message.chat_id,
+                        text="You have already added the {} coach".format(coach_name)))
             else:
                 out.append(self.bot.sendMessage(query.message.chat_id,
                     text="That is not a coach here."))
@@ -262,42 +266,38 @@ class Gratitude(Coach):
     @staticmethod
     def setup(setup_coach):
         """Setup this coach."""
-        config, created = CoachSetup.get_or_create(
-            coach=Gratitude.NAME, user=setup_coach.user)
-
         scheduled_dt = datetime.combine(
             datetime.today(), setup_coach.user.wake_time) + timedelta(hours=14)
         # scheduled_remaining = scheduled_dt - datetime.now()
         scheduled_remaining = timedelta(seconds=5)
 
+        job, created = Job.get_or_create(
+            coach=Gratitude.NAME,
+            user=setup_coach.user,
+            state=Gratitude.AWAITING_GRATITUDE,
+            scheduled_at=datetime.time(scheduled_dt),
+            text="Hey {name}, how was your day? Please send me three things that happened today that you are grateful for.".format(name=setup_coach.user.name)
+        )
         with setup_coach.db.transaction():
-            config.scheduled_at = scheduled_dt.hour
-            config.save()
+            job.save()
 
+        def jobfunc(bot):
+            return generic_job(bot, job.id)
+
+        interval = 24 * 60 * 60
+        setup_coach.job_queue.put(jobfunc, interval,
+            next_t=scheduled_remaining.seconds)
+
+        logger.info("Saved {} and scheduled first run in {}".format(job, scheduled_remaining))
         setup_coach.bot.sendMessage(setup_coach.user.telegram_id,
             text="Good choice! I will ask you every day at {time} to tell me three things you were grateful for in that day.".format(
                 time=scheduled_dt.strftime("%-I %p")))
-
-        def job(bot):
-            """Scheduled message to initiate daily coaching."""
-            setup_coach.user = User.get(User.id == setup_coach.user.id)
-
-            bot.sendMessage(setup_coach.user.telegram_id,
-                text="Hey {name}, how was your day? Please send me three things that happened today that you are grateful for.".format(name=setup_coach.user.name))
-
-            with setup_coach.db.transaction():
-                setup_coach.user.active_coach = Gratitude.NAME
-                setup_coach.user.state = Gratitude.AWAITING_GRATITUDE
-                setup_coach.user.save()
-
-        interval = 24 * 60 * 60
-        setup_coach.job_queue.put(job, interval,
-            next_t=scheduled_remaining.seconds)
 
     def handle(self, update):
         """Handle updates from user."""
         n_things = len(self.collector)
         n_reasons = len([r for r in self.collector if r.reaction])
+        start_menu = False
 
         if self.user.state == self.AWAITING_GRATITUDE:
             if n_things == 0:
@@ -332,26 +332,29 @@ class Gratitude(Coach):
                 self.bot.sendMessage(self.tguser.id,
                     parse_mode=telegram.ParseMode.MARKDOWN,
                     text="The second thing, why did that happen?\n\n_{}_".format(
-                        self.collector[n_reasons].content))
+                        self.collector[n_reasons + 1].content))
             elif n_reasons == 1:
                 self.collector[n_reasons].reaction = update.message.text
                 self.bot.sendMessage(self.tguser.id,
                     parse_mode=telegram.ParseMode.MARKDOWN,
                     text="And the third, how did that get to happen to you?\n\n_{}_".format(
-                        self.collector[n_reasons].content))
+                        self.collector[n_reasons + 1].content))
             elif n_reasons == 2:
                 self.collector[n_reasons].reaction = update.message.text
                 self.bot.sendMessage(self.tguser.id,
                     text="Good. I'll be back tomorrow.")
 
-                self.user.state = Menu.START
-                with self.db.transaction():
-                    self.user.save()
-
-                import pdb; pdb.set_trace()
-                menu = Menu(self.bot, self.db, self.tguser, self.job_queue)
-                menu.handle(update)
+                start_menu = True
 
         with self.db.transaction():
             for r in self.collector:
                 r.save()
+
+        if start_menu:
+            self.user.active_coach = Menu.NAME
+            self.user.state = Menu.START
+            with self.db.transaction():
+                self.user.save()
+
+            menu = Menu(self.bot, self.db, self.tguser, self.job_queue)
+            menu.handle(update)

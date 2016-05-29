@@ -10,7 +10,7 @@ from telegram.emoji import Emoji
 
 from conftest import custom_update, inline_query
 from diary_peter.coaches import Setup, Coach, Menu, Gratitude
-from diary_peter.models import db, User, Record, CoachSetup
+from diary_peter.models import db, User, Record, Job
 
 
 class TestBaseCoach:
@@ -18,7 +18,7 @@ class TestBaseCoach:
 
     def test_init(self, bot, tguser, test_db, updater):
         """Test initialization of the base coach class."""
-        with test_database(test_db, [User]):
+        with test_database(test_db, [User], fail_silently=True):
             coach = Coach(bot, test_db, tguser, updater.job_queue)
 
             assert isinstance(coach.bot, telegram.Bot)
@@ -49,7 +49,7 @@ class TestMenu:
 
     def test_handle(self, bot, menu_update, test_db, tguser, updater):
         """Test display of main menu."""
-        with test_database(test_db, [User, Record]):
+        with test_database(test_db, [User, Record], fail_silently=True):
             with db.transaction():
                 user, created = User.tg_get_or_create(tguser)
                 user.state = menu_update.states[0]
@@ -64,7 +64,7 @@ class TestMenu:
         """Test diary entry from main menu."""
         diary_entry = "My secret diary."
 
-        with test_database(test_db, [User, Record]):
+        with test_database(test_db, [User, Record], fail_silently=True):
             with db.transaction():
                 user, created = User.tg_get_or_create(tguser)
                 user.state = Menu.AWAITING_DIARY_ENTRY
@@ -104,7 +104,7 @@ class TestSetup:
 
     def test_handle(self, bot, setup_update, test_db, updater):
         """Test setup handler."""
-        with test_database(test_db, [User]):
+        with test_database(test_db, [User], fail_silently=True):
             with db.transaction():
                 user, created = User.tg_get_or_create(
                     setup_update.message.from_user)
@@ -141,7 +141,7 @@ class TestSetup:
     def test_handle_inline(self, bot, coach_query, test_db, updater):
         """Test setup handler."""
         query = coach_query.callback_query
-        with test_database(test_db, [User]):
+        with test_database(test_db, [User], fail_silently=True):
             with db.transaction():
                 user, created = User.get_or_create(
                     telegram_id=query.message.from_user.id,
@@ -175,7 +175,7 @@ class TestGratitude:
 
     def test_init(self, gratitudes, bot, tguser, test_db, updater):
         """Test that current gratitudes are collected in init."""
-        with test_database(test_db, [User, Record]):
+        with test_database(test_db, [User, Record], fail_silently=True):
             for g in gratitudes:
                 g.save()
             gc = Gratitude(bot, db, tguser, updater.job_queue)
@@ -184,7 +184,7 @@ class TestGratitude:
 
     def test_setup(self, user, bot, test_db, tguser, updater):
         """Test the setup method."""
-        with test_database(test_db, [User, Record, CoachSetup]):
+        with test_database(test_db, [User, Record, Job], fail_silently=True):
             sc = Setup(bot, test_db, tguser, updater.job_queue)
             Gratitude.setup(sc)
 
@@ -197,7 +197,7 @@ class TestGratitude:
 
     def test_handle(self, bot, test_db, tguser, updater, update, gratitude_states):
         """Test the handle that collects records from the user."""
-        with test_database(test_db, [User, Record, CoachSetup]):
+        with test_database(test_db, [User, Record, Job], fail_silently=True):
             user, created = User.tg_get_or_create(tguser)
             user.active_coach = Gratitude.NAME
             user.state = gratitude_states[0]

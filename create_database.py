@@ -5,7 +5,7 @@
 import peewee
 
 from logging import info, INFO, warning, basicConfig
-from diary_peter.models import db, CoachSetup, Record, User
+from diary_peter.models import db, Job, Record, User
 
 if __name__ == '__main__':
     basicConfig(format='%(levelname)s\t%(message)s', level=INFO)
@@ -13,7 +13,7 @@ if __name__ == '__main__':
     info("Creating database...")
     db.connect()
     try:
-        db.create_tables([CoachSetup, Record, User])
+        db.create_tables([Job, Record, User])
     except peewee.OperationalError as e:
         warning("Oopsie.")
         warning(e)

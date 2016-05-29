@@ -2,13 +2,22 @@
 
 """models.py: Provides database models for diary-pete, mapped by peewee."""
 
+import os
 import datetime
 import peewee as pw
 
 # from playhouse.pool import PooledSqliteDatabase
 
 
-db = pw.SqliteDatabase('test.db')
+if os.environ.get("PG_PASS", False):
+    db = pw.PostgresqlDatabase(
+        'peter',  # Required by Peewee.
+        user='peter',  # Will be passed directly to psycopg2.
+        password=os.environ.get("PG_PASS", False),  # Ditto.
+        host='localhost',  # Ditto.
+    )
+else:
+    db = pw.SqliteDatabase('test.db')
 
 
 class User(pw.Model):
@@ -92,19 +101,26 @@ class Record(pw.Model):
         order_by = ('created',)
 
 
-class CoachSetup(pw.Model):
+class Job(pw.Model):
     """Coach setup for a user."""
 
     user = pw.ForeignKeyField(User, related_name="goals")
     coach = pw.CharField()
+    state = pw.IntegerField(default=0)
     scheduled_at = pw.TimeField(default=lambda: datetime.time(hour=22))
+    text = pw.CharField()
+
+    def __repr__(self):
+        """Readable representation."""
+        return "{} job of user {} scheduled at {}".format(
+            self.coach, self.user.id, self.scheduled_at)
 
     class Meta:
         """Metadata for goal model."""
 
         database = db
 
-        # Create a unique index on `user` and `coach` fields
+        # Create a unique index
         indexes = (
-            (('user', 'coach'), True),
+            (('user', 'coach', 'state'), True),
         )

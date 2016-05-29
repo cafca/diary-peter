@@ -8,8 +8,9 @@ import telegram
 from peewee import SqliteDatabase
 from random import randint
 from telegram.ext import Updater
+from playhouse.test_utils import test_database
 
-from diary_peter.models import User
+from diary_peter.models import User, Record, Job
 
 user_data = {
     'id': 4325497,
@@ -57,9 +58,9 @@ def update():
 
 
 @pytest.fixture
-def user():
+def user(test_db):
     """Return a single user object."""
-    return create_users(num=1)[0]
+    return create_users(test_db, num=1)[0]
 
 
 def custom_update(msg="Lol I just ate a whole tuna."):
@@ -110,13 +111,14 @@ def inline_query(data):
     return rv
 
 
-def create_users(num=10):
+def create_users(db, num=10):
     """Utility func for creating users."""
-    rv = []
-    for i in range(num):
-        rv.append(User.create_or_get(
-            telegram_id=4325497 + i,
-            name="User-{}".format(i),
-            chat_id=4325497 + i
-        )[0])
-    return rv
+    with test_database(db, [User, Record, Job], fail_silently=True):
+        rv = []
+        for i in range(num):
+            rv.append(User.create_or_get(
+                telegram_id=4325497 + i,
+                name="User-{}".format(i),
+                chat_id=4325497 + i
+            )[0])
+        return rv
