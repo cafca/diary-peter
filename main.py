@@ -43,8 +43,9 @@ __status__ = "Development"
 job_queue = None
 
 logging.basicConfig(
-    format='%(levelname)s\t%(name)s\t\t%(message)s',
-    level=logging.INFO)
+    format='%(asctime)s %(levelname) 8s\t%(name) 25s\t%(message)s',
+    level=logging.DEBUG,
+    filename="../peter.log")
 logger = logging.getLogger(__name__)
 
 
