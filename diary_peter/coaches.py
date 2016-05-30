@@ -69,6 +69,19 @@ class Menu(Coach):
         out = []
 
         if self.user.state == self.AWAITING_DIARY_ENTRY:
+            if update.message is None:
+                if update.callback_query:
+                    error = "Sweetie, you can't press those buttons anymore."
+                    logging.warning(
+                        "User tried to send callback to main menu handler: '{}'".format(update.callback_query)
+                    )
+                else:
+                    error = "I think you were trying to add something to you diary, but I did not get a message? Please try again for me!"
+                    logging.error("Empty message arrived in main handler that has no callback_query attached.")
+                self.bot.sendMessage(self.tguser.id,
+                    text=error)
+                return
+
             with self.db.transaction():
                 rec = self.user.create_record("text", update.message.text)
                 rec.save()
@@ -202,7 +215,7 @@ class Setup(Coach):
                 kb['continue'] = "Continue to main menu"
 
                 out.append(self.bot.sendMessage(self.tguser.id,
-                    text="Click a coach to add it now.",
+                    text="Click the name of a a coach below to add it now.",
                     reply_markup=inline_keyboard(kb)))
 
                 with self.db.transaction():
@@ -257,10 +270,10 @@ class Setup(Coach):
                     coach_cls = globals()[coach_name]
                     coach_cls.setup(self)
                     out.append(self.bot.sendMessage(query.message.chat_id,
-                        text="Add another coach or click 'continue' above to finish.."))
+                        text="Add another coach or click 'continue' above to finish."))
                 else:
                     out.append(self.bot.sendMessage(query.message.chat_id,
-                        text="You have already added the {} coach".format(coach_name)))
+                        text="You have already added the {} coach {}".format(coach_name, Emoji.EYES)))
             else:
                 out.append(self.bot.sendMessage(query.message.chat_id,
                     text="That is not a coach here."))
@@ -288,16 +301,18 @@ class Gratitude(Coach):
         scheduled_dt = datetime.combine(
             datetime.today(), setup_coach.user.wake_time) - timedelta(hours=10)
         scheduled_remaining = scheduled_dt - datetime.now() - timedelta(hours=6)
-        if scheduled_remaining.seconds < 0:
+
+        scheduled_remaining = timedelta(seconds=10)
+
+        if scheduled_remaining < timedelta(days=1):
             scheduled_remaining = scheduled_remaining + timedelta(days=1)
-        # scheduled_remaining = timedelta(seconds=5)
 
         job, created = Job.get_or_create(
             coach=Gratitude.NAME,
             user=setup_coach.user,
             state=Gratitude.AWAITING_GRATITUDE,
             scheduled_at=datetime.time(scheduled_dt),
-            text="Hey {name}, how was your day? Please send me three things that happened today that you are grateful for.".format(name=setup_coach.user.name)
+            text="Hey {}, how was your day? Describe something that happened today that you are grateful for {}".format(setup_coach.user.name, Emoji.RELIEVED_FACE)
         )
         with setup_coach.db.transaction():
             job.save()
@@ -317,7 +332,7 @@ class Gratitude(Coach):
     def handle(self, update):
         """Handle updates from user."""
         n_things = len(self.collector)
-        n_reasons = len([r for r in self.collector if r.reaction])
+        n_reasons = len([r for r in self.collector if r.reaction is not None])
         start_menu = False
 
         if self.user.state == self.AWAITING_GRATITUDE:
@@ -325,21 +340,21 @@ class Gratitude(Coach):
                 self.collector.append(
                     self.user.create_record(self.NAME, update.message.text))
                 self.bot.sendMessage(self.tguser.id,
-                    text="Ok. Two more!")
+                    text="Ok. Think of a second thing that happened and describe it.!")
 
             elif n_things == 1:
                 self.collector.append(
                     self.user.create_record(self.NAME, update.message.text))
                 self.bot.sendMessage(self.tguser.id,
-                    text="One left.")
+                    text="One more ")
 
             elif n_things == 2:
                 self.collector.append(
                     self.user.create_record(self.NAME, update.message.text))
                 self.bot.sendMessage(self.tguser.id,
                     parse_mode=telegram.ParseMode.MARKDOWN,
-                    text="Nice! Now, about that first one:\n\n_{}_\n\n".format(
-                        self.collector[0].content))
+                    text="Nice! {} Now, about that first one:\n\n_{}_\n\n".format(
+                        Emoji.GRINNING_FACE, self.collector[0].content))
                 self.bot.sendMessage(self.tguser.id,
                     text="Can you tell me, what you think why this particular good thing happened to you?")
 
@@ -363,7 +378,7 @@ class Gratitude(Coach):
             elif n_reasons == 2:
                 self.collector[n_reasons].reaction = update.message.text
                 self.bot.sendMessage(self.tguser.id,
-                    text="Good. I'll be back tomorrow.")
+                    text="Good. I'll be back tomorrow. {}".format(Emoji.RELIEVED_FACE))
 
                 start_menu = True
 
